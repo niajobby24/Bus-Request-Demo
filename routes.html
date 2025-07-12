@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Bus Stop Request</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #f0f8ff;
+    }
+    h2 {
+      color: #0077cc;
+    }
+    select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #0077cc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #0077cc;
+      color: white;
+      cursor: pointer;
+    }
+    #map {
+      height: 300px;
+      margin: 20px 0;
+    }
+    #msg {
+      color: green;
+      font-weight: bold;
+    }
+    #logoutBtn {
+      float: right;
+      background-color: #ccc;
+      color: black;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>Request Your Bus Stop
+    <button id="logoutBtn">Log out</button>
+  </h2>
+
+  <label for="routeSel">Select Route:</label>
+  <select id="routeSel"><option>Loading...</option></select>
+
+  <label for="stopSel">Select Stop:</label>
+  <select id="stopSel"></select>
+
+  <div id="map"></div>
+  <button id="reqBtn">Request Stop</button>
+  <div id="msg"></div>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCbKb694ZxxLBgeThRC688Ddd8utjiIkBg",
+  authDomain: "bus-request-app-87702.firebaseapp.com",
+  projectId: "bus-request-app-87702",
+  storageBucket: "bus-request-app-87702.firebasestorage.app",
+  messagingSenderId: "497686281165",
+  appId: "1:497686281165:web:17b4206bc494ee84bfa284",
+  measurementId: "G-G6CCXE3N2C"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Redirect if not signed in
+auth.onAuthStateChanged(user => {
+  if (!user) window.location.href = 'index.html';
+});
+
+// Logout
+document.getElementById('logoutBtn').onclick = () => auth.signOut();
+
+// Map
+const map = L.map('map').setView([8.5241, 76.9356], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+let newMarker = null, selectedLatLng = null;
+map.on('click', e => {
+  if (newMarker) map.removeLayer(newMarker);
+  selectedLatLng = e.latlng;
+  newMarker = L.marker(e.latlng).addTo(map).bindPopup("New Stop").openPopup();
+});
+
+// Haversine distance in meters
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 637000, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Dropdowns and stop cache
+const routeSel = document.getElementById('routeSel');
+const stopSel = document.getElementById('stopSel');
+let stopsCache = {};
+
+db.collection('routes').get().then(snap => {
+  routeSel.innerHTML = '';
+  snap.forEach(doc => {
+    const o = document.createElement('option');
+    o.value = doc.id;
+    o.textContent = doc.data().name || doc.id;
+    routeSel.appendChild(o);
+  });
+  loadStops();
+});
+
+routeSel.onchange = loadStops;
+
+function loadStops() {
+  const rid = routeSel.value;
+  stopSel.innerHTML = '';
+  stopsCache = {};
+
+  db.collection('routes').doc(rid).collection('stops').get().then(snap => {
+    snap.forEach(doc => {
+      const s = doc.data();
+      const o = document.createElement('option');
+      o.value = doc.id;
+      o.textContent = s.name;
+      stopSel.appendChild(o);
+      stopsCache[doc.id] = { name: s.name, lat: s.lat, lng: s.lng };
+    });
+
+    if (stopSel.value) updateMapMarker(stopSel.value);
+  });
+}
+
+function updateMapMarker(stopId) {
+  const s = stopsCache[stopId];
+  if (!s) return;
+  if (newMarker) map.removeLayer(newMarker);
+  newMarker = L.marker([s.lat, s.lng]).addTo(map).bindPopup(s.name).openPopup();
+  map.setView([s.lat, s.lng], 15);
+}
+
+stopSel.onchange = () => updateMapMarker(stopSel.value);
+
+// Submit request
+document.getElementById('reqBtn').onclick = async () => {
+  const rid = routeSel.value;
+  const selectedStop = stopSel.value;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  let finalStopId;
+
+  if (selectedLatLng) {
+    const { lat, lng } = selectedLatLng;
+
+    // Check for nearby stop within 60m
+    let nearestId = null;
+    for (const [id, s] of Object.entries(stopsCache)) {
+      const d = haversine(lat, lng, s.lat, s.lng);
+      if (d < 10) {
+        nearestId = id;
+        break;
+      }
+    }
+
+    if (nearestId) {
+      // Use existing stop
+      finalStopId = nearestId;
+    } else {
+      // Add temporary stop
+      const newDoc = await db.collection('routes').doc(rid).collection('stops').add({
+        name: `Temp ${Date.now()}`,
+        lat, lng,
+        temp: true,
+        order: 9999
+      });
+      finalStopId = newDoc.id;
+      stopsCache[finalStopId] = { name: `Temp`, lat, lng };
+    }
+
+  } else {
+    // Use selected stop from dropdown
+    finalStopId = selectedStop;
+  }
+
+  await db.collection('stop_requests').add({
+    email: user.email,
+    route: rid,
+    stop: finalStopId,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  document.getElementById('msg').textContent =
+    `✅ Request submitted for ${stopsCache[finalStopId].name}`;
+
+  if (newMarker) { map.removeLayer(newMarker); newMarker = null; }
+  selectedLatLng = null;
+};
+</script>
+</body>
+</html>

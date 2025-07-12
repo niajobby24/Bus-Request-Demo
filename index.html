@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Bus Request Demo – Login</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+
+  <!-- Styles -->
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef4fa;
+      color: #003366;
+      max-width: 360px;
+      margin: 60px auto;
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 50, 0.1);
+    }
+
+    h2, h3 {
+      color: #004c99;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      border: 1px solid #aaccee;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    input:focus {
+      border-color: #3399ff;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(51, 153, 255, 0.2);
+    }
+
+    button {
+      background-color: #3399ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #267acc;
+    }
+
+    pre {
+      background: #f0f8ff;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    hr {
+      margin: 28px 0;
+      border: none;
+      border-top: 1px solid #ddeeff;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 12px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h2>Bus Request Login</h2>
+
+  <!-- LOGIN FORM -->
+  <input id="email" type="email" placeholder="Email" />
+  <input id="pass" type="password" placeholder="Password" />
+  <button id="login">Log In</button>
+
+  <hr />
+
+  <!-- REQUEST ACCESS FORM -->
+  <h3>Request Access</h3>
+  <input id="reqEmail" type="email" placeholder="Your company email" />
+  <button id="requestBtn">Request Access</button>
+  <pre id="reqMsg"></pre>
+
+  <div class="footer">© 2025 Company Transport System</div>
+
+  <script>
+    const firebaseConfig = {
+      // Your Firebase config here
+      apiKey: "AIzaSyCbKb694ZxxLBgeThRC688Ddd8utjiIkBg",
+    authDomain: "bus-request-app-87702.firebaseapp.com",
+    projectId: "bus-request-app-87702",
+    storageBucket: "bus-request-app-87702.firebasestorage.app",
+    messagingSenderId: "497686281165",
+    appId: "1:497686281165:web:17b4206bc494ee84bfa284",
+    measurementId: "G-G6CCXE3N2C"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const $ = id => document.getElementById(id);
+    const show = (id, txt) => { $(id).textContent = txt; };
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return;
+      const email = user.email.trim().toLowerCase();
+      if (email === 'driver@company.com') {
+        location.href = 'driver.html';
+      } else {
+        location.href = 'routes.html';
+      }
+    });
+
+    $('login').onclick = async () => {
+      try {
+        await auth.signInWithEmailAndPassword($('email').value.trim(), $('pass').value);
+        // Redirect will happen via auth state
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    $('requestBtn').onclick = async () => {
+      const email = $('reqEmail').value.trim();
+      if (!email.endsWith('@company.com')) {
+        show('reqMsg', 'Please use your @company.com email.');
+        return;
+      }
+      try {
+        await db.collection('signup_requests').add({
+          email,
+          status: 'pending',
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        show('reqMsg', '✅ Request sent! You’ll be notified when approved.');
+      } catch (e) {
+        show('reqMsg', e.message);
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Admin – Approve Sign‑ups</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-functions-compat.js"></script>
+</head>
+<body>
+  <h2>Pending Requests</h2>
+  <ul id="list"></ul>
+
+  <script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyCbKb694ZxxLBgeThRC688Ddd8utjiIkBg",
+    authDomain: "bus-request-app-87702.firebaseapp.com",
+    projectId: "bus-request-app-87702",
+    storageBucket: "bus-request-app-87702.firebasestorage.app",
+    messagingSenderId: "497686281165",
+    appId: "1:497686281165:web:17b4206bc494ee84bfa284",
+    measurementId: "G-G6CCXE3N2C"
+  };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+    const fn   = firebase.functions();
+
+    // **** simple admin gate: hard‑coded e‑mail for demo ****
+    auth.signInWithEmailAndPassword("admin@company.com", "demo123")
+      .then(loadRequests)
+      .catch(e => alert("Admin login failed: " + e.message));
+
+    function loadRequests() {
+      db.collection('signup_requests')
+        .where('status', '==', 'pending')
+        .onSnapshot(snap => {
+          const ul = document.getElementById('list');
+          ul.innerHTML = '';
+          snap.forEach(doc => {
+            const li  = document.createElement('li');
+            const { email } = doc.data();
+            li.textContent = email + ' ';
+            const btn = document.createElement('button');
+            btn.textContent = 'Approve';
+            btn.onclick  = () => approve(doc.id, email);
+            li.appendChild(btn);
+            ul.appendChild(li);
+          });
+        });
+    }
+
+    function approve(id, email) {
+      fn.httpsCallable('approveSignup')({ id, email })
+        .then(() => alert('Approved ' + email))
+        .catch(err => alert(err.message));
+    }
+  </script>
+</body>
+</html>

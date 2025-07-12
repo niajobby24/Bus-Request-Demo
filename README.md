@@ -1,4 +1,4 @@
-#**🚌 Smart Bus Stop Request System**
+# **🚌 Smart Bus Stop Request System**
 
 A lightweight, cost-free internal tool for smart transport planning — designed during my internship at Tata Elxsi to solve a real challenge employees face when using company buses with inconsistent stop schedules.
 

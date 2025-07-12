@@ -1,4 +1,5 @@
-🚌 Smart Bus Stop Request System
+#**🚌 Smart Bus Stop Request System**
+
 A lightweight, cost-free internal tool for smart transport planning — designed during my internship at Tata Elxsi to solve a real challenge employees face when using company buses with inconsistent stop schedules.
 
 🧩 Problem
@@ -57,6 +58,12 @@ Roadmap
 
 📸 Screenshots
 <img width="1919" height="1019" alt="Screenshot 2025-07-13 033039" src="https://github.com/user-attachments/assets/d2c935f1-ffed-448b-9fb7-eb29c3aee270" />
+<img width="1911" height="963" alt="Screenshot 2025-07-13 040741" src="https://github.com/user-attachments/assets/be6bc14c-2709-435c-a2cf-c1170400dac6" />
+<img width="1902" height="959" alt="Screenshot 2025-07-13 040814" src="https://github.com/user-attachments/assets/ecb011ba-eb32-4fa0-9c05-15f0d5819008" />
+<img width="1898" height="962" alt="Screenshot 2025-07-13 040835" src="https://github.com/user-attachments/assets/489e8b97-14de-40a4-ac52-4acd6d27c627" />
+
+
+
 
 💬 Acknowledgements
   This system was independently conceptualized and developed as a practical solution to a recurring issue during my internship. While it was inspired by my time at Tata Elxsi, all design and development were initiated by me, and the platform runs entirely on free-tier services.

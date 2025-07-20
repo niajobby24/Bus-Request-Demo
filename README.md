@@ -1,5 +1,7 @@
 # **🚌 Smart Bus Stop Request System**
 
+🔗 [Live Demo](https://bus-request-app-87702.web.app/)
+
 A lightweight, cost-free internal tool for smart transport planning — designed during my internship at Tata Elxsi to solve a real challenge employees face when using company buses with inconsistent stop schedules.
 
 🧩 Problem
@@ -67,3 +69,8 @@ Roadmap
 
 💬 Acknowledgements
   This system was independently conceptualized and developed as a practical solution to a recurring issue during my internship. While it was inspired by my time at Tata Elxsi, all design and development were initiated by me, and the platform runs entirely on free-tier services.
+
+  ## License
+
+This project is licensed under the [MIT License](LICENSE).
+
